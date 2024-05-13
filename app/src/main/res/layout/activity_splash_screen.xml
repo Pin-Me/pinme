@@ -21,7 +21,7 @@
         <ImageView
             android:layout_width="320dp"
             android:layout_height="320dp"
-            android:src="@drawable/pinme_horizontal_logo"
+            android:src="@drawable/pinme_horizontal"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
