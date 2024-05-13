@@ -15,7 +15,7 @@ class AugmentedImageRenderer {
     @Throws(IOException::class)
     fun createOnGlThread(context: Context) {
         image.createOnGlThread(
-            context, "models/andy.obj", "models/andy_spec.png"
+            context, "models/andy.obj", "models/andy.png"
         )
         image.setMaterialProperties(0.0f, 3.5f, 1.0f, 6.0f)
         image.setBlendMode(BlendMode.AlphaBlending)
@@ -30,9 +30,9 @@ class AugmentedImageRenderer {
         )
 
         val localBoundaryPoses = arrayOf(
-            Pose.makeRotation(0.0f, 0.5f, 0.0f, 0.5f)
+            Pose.makeRotation(0.0f, 0.5f, -0.5f, 0.0f)
                 .compose(Pose.makeTranslation(
-                    0.0f * augmentedImage.extentX, 0.0f, 0.0f * augmentedImage.extentX
+                    0.0f * augmentedImage.extentX, -0.15f, 0.0f * augmentedImage.extentX
                 ))
         )
 

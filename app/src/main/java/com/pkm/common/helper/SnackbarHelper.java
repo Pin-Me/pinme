@@ -130,7 +130,7 @@ public final class SnackbarHelper {
             messageSnackbar.getView().setBackgroundColor(BACKGROUND_COLOR);
             if (dismissBehavior != DismissBehavior.HIDE && duration == Snackbar.LENGTH_INDEFINITE) {
               messageSnackbar.setAction(
-                  "Dismiss",
+                  "Back",
                   new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {

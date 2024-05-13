@@ -24,6 +24,7 @@ import com.google.ar.core.Frame
 import com.google.ar.core.Session
 import com.google.ar.core.TrackingState
 import com.google.ar.core.exceptions.CameraNotAvailableException
+import com.google.ar.core.exceptions.ImageInsufficientQualityException
 import com.google.ar.core.exceptions.UnavailableApkTooOldException
 import com.google.ar.core.exceptions.UnavailableArcoreNotInstalledException
 import com.google.ar.core.exceptions.UnavailableSdkTooOldException
@@ -34,10 +35,15 @@ import com.pkm.common.helper.SnackbarHelper
 import com.pkm.common.helper.TrackingStateHelper
 import com.pkm.common.rendering.BackgroundRenderer
 import com.pkm.pinme.R
+import com.pkm.pinme.databinding.ActivityMainBinding
 import com.pkm.pinme.rendering.AugmentedImageRenderer
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import java.io.IOException
@@ -48,6 +54,8 @@ import javax.microedition.khronos.opengles.GL10
 
 
 class MainActivity : AppCompatActivity(), GLSurfaceView.Renderer {
+    private lateinit var binding: ActivityMainBinding
+
     private var surfaceView: GLSurfaceView? = null
     private var fitToScanView: ImageView? = null
     private var glideRequestManager: RequestManager? = null
@@ -73,7 +81,8 @@ class MainActivity : AppCompatActivity(), GLSurfaceView.Renderer {
             WindowManager.LayoutParams.FLAG_FULLSCREEN
         )
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
         surfaceView = findViewById(R.id.surface_view)
         displayRotationHelper = DisplayRotationHelper(this)
         surfaceView?.apply {
@@ -85,10 +94,6 @@ class MainActivity : AppCompatActivity(), GLSurfaceView.Renderer {
             willNotDraw()
         }
         fitToScanView = findViewById(R.id.image_view_fit_to_scan)
-        glideRequestManager = Glide.with(this)
-        glideRequestManager!!
-            .load(Uri.parse("file:///android_asset/fit_to_scan.png"))
-            .into(fitToScanView!!)
         installRequested = false
     }
 
@@ -131,19 +136,13 @@ class MainActivity : AppCompatActivity(), GLSurfaceView.Renderer {
             shouldConfigureSession = true
         }
         if (shouldConfigureSession) {
-            configureSession()
+            CoroutineScope(Main).launch {
+                configureSession()
+            }
             shouldConfigureSession = false
-        }
-        try {
-            session?.resume()
-        } catch (e: CameraNotAvailableException) {
-            messageSnackbarHelper.showError(this, "Camera not available. Try restarting the app.")
-            session = null
-            return
         }
         surfaceView?.onResume()
         displayRotationHelper.onResume()
-        fitToScanView?.visibility = View.VISIBLE
     }
 
     override fun onPause() {
@@ -218,16 +217,11 @@ class MainActivity : AppCompatActivity(), GLSurfaceView.Renderer {
         }
     }
 
-    private fun configureSession() {
+    private suspend fun configureSession() {
         config = Config(session)
         config.setFocusMode(Config.FocusMode.AUTO)
-        if (url.isNotEmpty()) {
-            setupAugmentedImageDatabaseFromUrl(config);
-        } else {
-            if (!setupAugmentedImageDatabase(config)) {
-                messageSnackbarHelper.showError(this, "Could not setup augmented image database")
-            }
-        }
+        setupAugmentedImageDatabaseFromUrl(config)
+
         session?.resume()
         session?.pause()
         session?.resume()
@@ -294,14 +288,34 @@ class MainActivity : AppCompatActivity(), GLSurfaceView.Renderer {
         return true
     }
 
-    private fun setupAugmentedImageDatabaseFromUrl(config: Config): Boolean {
-        runBlocking {
-            val augmentedImageBitmap = async { loadAugmentedImageUrlBitmap() }
-            val augmentedImageDatabase = AugmentedImageDatabase(session).apply {
-                addImage("image_name", augmentedImageBitmap.await())
-            }
-            config.augmentedImageDatabase = augmentedImageDatabase
+    private suspend fun setupAugmentedImageDatabaseFromUrl(config: Config): Boolean {
+        try {
+        val augmentedImageBitmap = loadAugmentedImageUrlBitmap()
+        val augmentedImageDatabase = AugmentedImageDatabase(session).apply {
+            addImage("image_name", augmentedImageBitmap)
         }
+        config.augmentedImageDatabase = augmentedImageDatabase
+        fitToScanView?.visibility = View.VISIBLE
+        surfaceView?.visibility = View.VISIBLE
+        binding.pbLoading.visibility = View.GONE
+
+        } catch (e: NullPointerException) {
+            messageSnackbarHelper.showError(
+                this@MainActivity,
+                "Minimal kasi foto yg bener"
+            )
+        } catch (e: ImageInsufficientQualityException) {
+            messageSnackbarHelper.showError(
+                this@MainActivity,
+                "Fotonya jelek (too few features)"
+            )
+        } catch (e: Exception) {
+            messageSnackbarHelper.showError(
+                this@MainActivity,
+                e.message
+            )
+        }
+
         return true
     }
 
