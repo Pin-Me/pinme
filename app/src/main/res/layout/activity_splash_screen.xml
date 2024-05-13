@@ -8,14 +8,25 @@
     android:background="@color/white"
     tools:context=".ui.SplashScreenActivity">
 
-    <ImageView
-        android:layout_width="310dp"
-        android:layout_height="310dp"
-        android:src="@drawable/pinme_logo"
-
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageView
+            android:layout_width="320dp"
+            android:layout_height="320dp"
+            android:src="@drawable/pinme_horizontal_logo"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+    </LinearLayout>
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>
