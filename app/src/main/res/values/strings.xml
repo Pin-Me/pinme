@@ -1,3 +1,4 @@
 <resources>
-    <string name="app_name">pinme</string>
+    <string name="app_name">PinMe</string>
+    <string name="fit_object_to_camera">Fit Object to Camera</string>
 </resources>
