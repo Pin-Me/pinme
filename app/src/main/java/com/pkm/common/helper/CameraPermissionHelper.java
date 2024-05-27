@@ -28,11 +28,18 @@ import androidx.core.content.ContextCompat;
 /** Helper to ask camera permission. */
 public final class CameraPermissionHelper {
   private static final int CAMERA_PERMISSION_CODE = 0;
+  private static final int STORAGE_PERMISSION_CODE = 1;
   private static final String CAMERA_PERMISSION = Manifest.permission.CAMERA;
+  private static final String STORAGE_PERMISSION = Manifest.permission.WRITE_EXTERNAL_STORAGE;
 
   /** Check to see we have the necessary permissions for this app. */
   public static boolean hasCameraPermission(Activity activity) {
     return ContextCompat.checkSelfPermission(activity, CAMERA_PERMISSION)
+        == PackageManager.PERMISSION_GRANTED;
+  }
+
+  public static boolean hasStoragePermission(Activity activity) {
+    return ContextCompat.checkSelfPermission(activity, STORAGE_PERMISSION)
         == PackageManager.PERMISSION_GRANTED;
   }
 
@@ -42,9 +49,18 @@ public final class CameraPermissionHelper {
         activity, new String[] {CAMERA_PERMISSION}, CAMERA_PERMISSION_CODE);
   }
 
+  public static void requestStoragePermission(Activity activity) {
+    ActivityCompat.requestPermissions(activity,
+            new String[] {STORAGE_PERMISSION}, STORAGE_PERMISSION_CODE);
+  }
+
   /** Check to see if we need to show the rationale for this permission. */
-  public static boolean shouldShowRequestPermissionRationale(Activity activity) {
+  public static boolean shouldShowRequestCameraPermissionRationale(Activity activity) {
     return ActivityCompat.shouldShowRequestPermissionRationale(activity, CAMERA_PERMISSION);
+  }
+
+  public static boolean shouldShowRequestStoragePermissionRationale(Activity activity) {
+    return ActivityCompat.shouldShowRequestPermissionRationale(activity, STORAGE_PERMISSION);
   }
 
   /** Launch Application Setting to grant permission. */

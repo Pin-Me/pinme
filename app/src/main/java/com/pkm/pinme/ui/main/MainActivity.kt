@@ -1,34 +1,40 @@
-package com.pkm.pinme.ui
+package com.pkm.pinme.ui.main
 
+import android.annotation.SuppressLint
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.hardware.SensorManager
 import android.net.Uri
 import android.opengl.GLES20
 import android.opengl.GLSurfaceView
 import android.os.Bundle
+import android.os.Environment
 import android.util.Log
 import android.util.Pair
+import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
 import android.widget.ImageView
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
 import com.google.ar.core.Anchor
 import com.google.ar.core.ArCoreApk
 import com.google.ar.core.AugmentedImage
 import com.google.ar.core.AugmentedImageDatabase
+import com.google.ar.core.Camera
 import com.google.ar.core.Config
 import com.google.ar.core.Frame
+import com.google.ar.core.Pose
+import com.google.ar.core.RecordingConfig
+import com.google.ar.core.RecordingStatus
 import com.google.ar.core.Session
+import com.google.ar.core.Track
 import com.google.ar.core.TrackingState
-import com.google.ar.core.exceptions.CameraNotAvailableException
 import com.google.ar.core.exceptions.ImageInsufficientQualityException
+import com.google.ar.core.exceptions.RecordingFailedException
 import com.google.ar.core.exceptions.UnavailableApkTooOldException
 import com.google.ar.core.exceptions.UnavailableArcoreNotInstalledException
 import com.google.ar.core.exceptions.UnavailableSdkTooOldException
-import com.pkm.common.helper.CameraPermissionHelper
 import com.pkm.common.helper.DisplayRotationHelper
 import com.pkm.common.helper.FullScreenHelper
 import com.pkm.common.helper.SnackbarHelper
@@ -40,15 +46,21 @@ import com.pkm.pinme.rendering.AugmentedImageRenderer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Dispatchers.Main
-import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import java.io.File
+import java.io.FileOutputStream
 import java.io.IOException
 import java.io.InputStream
 import java.net.URL
+import java.nio.ByteBuffer
+import java.nio.IntBuffer
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.util.Locale
+import java.util.UUID
+import java.util.concurrent.atomic.AtomicReference
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 
@@ -58,7 +70,6 @@ class MainActivity : AppCompatActivity(), GLSurfaceView.Renderer {
 
     private var surfaceView: GLSurfaceView? = null
     private var fitToScanView: ImageView? = null
-    private var glideRequestManager: RequestManager? = null
     private var installRequested = false
     private var session: Session? = null
     private val messageSnackbarHelper = SnackbarHelper()
@@ -70,8 +81,23 @@ class MainActivity : AppCompatActivity(), GLSurfaceView.Renderer {
     private var shouldConfigureSession = false
     private val augmentedImageMap: MutableMap<Int, Pair<AugmentedImage, Anchor>> = HashMap()
 
+    private val MP4_DATASET_FILENAME_TEMPLATE = "arcore-dataset-%s.mp4"
+    private val MP4_DATASET_TIMESTAMP_FORMAT = "yyyy-MM-dd-HH-mm-ss"
+
+    private val ANCHOR_TRACK_ID = UUID.fromString("a65e59fc-2e13-4607-b514-35302121c138")
+    private val ANCHOR_TRACK_MIME_TYPE = "application/hello-recording-playback-anchor"
+
+    private var lastRecordingDatasetPath: String? = null
+
+    private var playbackDatasetPath: String? = null
+
+    private var mWidth = 0
+    private var mHeight = 0
+    private var capturePicture = false
+
     private lateinit var url: String
 
+    @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         val intent = intent
         url = intent.getStringExtra("url").toString()
@@ -90,8 +116,8 @@ class MainActivity : AppCompatActivity(), GLSurfaceView.Renderer {
             setEGLContextClientVersion(2)
             setEGLConfigChooser(8, 8, 8, 8, 16, 0)
             setRenderer(this@MainActivity)
-            renderMode = GLSurfaceView.FOCUSABLES_TOUCH_MODE
-            willNotDraw()
+            renderMode = GLSurfaceView.RENDERMODE_CONTINUOUSLY
+            setWillNotDraw(false)
         }
         fitToScanView = findViewById(R.id.image_view_fit_to_scan)
         installRequested = false
@@ -112,12 +138,9 @@ class MainActivity : AppCompatActivity(), GLSurfaceView.Renderer {
                         installRequested = true
                         return
                     }
+
                     ArCoreApk.InstallStatus.INSTALLED -> {
                     }
-                }
-                if (!CameraPermissionHelper.hasCameraPermission(this)) {
-                    CameraPermissionHelper.requestCameraPermission(this)
-                    return
                 }
                 session = Session(this)
             } catch (e: UnavailableArcoreNotInstalledException) {
@@ -154,41 +177,28 @@ class MainActivity : AppCompatActivity(), GLSurfaceView.Renderer {
         }
     }
 
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (!CameraPermissionHelper.hasCameraPermission(this)) {
-            Toast.makeText(
-                this, "Camera permissions are needed to run this application", Toast.LENGTH_LONG
-            ).show()
-            if (!CameraPermissionHelper.shouldShowRequestPermissionRationale(this)) {
-                CameraPermissionHelper.launchPermissionSettings(this)
-            }
-            finish()
-        }
-    }
-
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
         FullScreenHelper.setFullScreenOnWindowFocusChanged(this, hasFocus)
     }
 
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
-        GLES20.glClearColor(0.1f, 0.1f, 0.1f, 1.0f)
+        GLES20.glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         try {
             backgroundRenderer.createOnGlThread(this)
             augmentedImageRenderer.createOnGlThread(this)
         } catch (e: IOException) {
             Log.e(TAG, "Failed to read an asset file", e)
         }
+
+
     }
 
     override fun onSurfaceChanged(gl: GL10?, width: Int, height: Int) {
         displayRotationHelper.onSurfaceChanged(width, height)
         GLES20.glViewport(0, 0, width, height)
+        mWidth = width;
+        mHeight = height
     }
 
     override fun onDrawFrame(gl: GL10?) {
@@ -198,20 +208,22 @@ class MainActivity : AppCompatActivity(), GLSurfaceView.Renderer {
         }
         displayRotationHelper.updateSessionIfNeeded(session)
         try {
-            session?.apply {
-                setCameraTextureName(backgroundRenderer.textureId)
-                val frame = update()
+                session!!.setCameraTextureName(backgroundRenderer.textureId)
+                val frame = session!!.update()
                 val camera = frame.camera
                 trackingStateHelper.updateKeepScreenOnFlag(camera.trackingState)
                 backgroundRenderer.draw(frame)
+
                 val projmtx = FloatArray(16)
                 camera.getProjectionMatrix(projmtx, 0, 0.1f, 100.0f)
+
                 val viewmtx = FloatArray(16)
                 camera.getViewMatrix(viewmtx, 0)
+
                 val colorCorrectionRgba = FloatArray(4)
                 frame.lightEstimate.getColorCorrection(colorCorrectionRgba, 0)
                 drawAugmentedImages(frame, projmtx, viewmtx, colorCorrectionRgba)
-            }
+
         } catch (t: Throwable) {
             Log.e(TAG, "Exception on the OpenGL thread", t)
         }
@@ -221,7 +233,6 @@ class MainActivity : AppCompatActivity(), GLSurfaceView.Renderer {
         config = Config(session)
         config.setFocusMode(Config.FocusMode.AUTO)
         setupAugmentedImageDatabaseFromUrl(config)
-
         session?.resume()
         session?.pause()
         session?.resume()
@@ -241,16 +252,19 @@ class MainActivity : AppCompatActivity(), GLSurfaceView.Renderer {
                     val text = String.format("Detected Image %d", augmentedImage.index)
                     messageSnackbarHelper.showMessage(this, text)
                 }
+
                 TrackingState.TRACKING -> {
                     runOnUiThread {
                         fitToScanView?.visibility = View.GONE
                     }
                     if (!augmentedImageMap.containsKey(augmentedImage.index)) {
-                        val centerPoseAnchor = augmentedImage.createAnchor(augmentedImage.centerPose)
+                        val centerPoseAnchor =
+                            augmentedImage.createAnchor(augmentedImage.centerPose)
                         augmentedImageMap[augmentedImage.index] =
                             Pair.create(augmentedImage, centerPoseAnchor)
                     }
                 }
+
                 TrackingState.STOPPED -> augmentedImageMap.remove(augmentedImage.index)
                 else -> {
                 }
@@ -261,54 +275,41 @@ class MainActivity : AppCompatActivity(), GLSurfaceView.Renderer {
             val centerAnchor = augmentedImageMap[augmentedImage.index]?.second
             when (augmentedImage.trackingState) {
                 TrackingState.TRACKING ->
-                    augmentedImageRenderer.draw(viewmtx, projmtx, augmentedImage, centerAnchor!!, colorCorrectionRgba)
+                    augmentedImageRenderer.draw(
+                        viewmtx,
+                        projmtx,
+                        augmentedImage,
+                        centerAnchor!!,
+                        colorCorrectionRgba
+                    )
+
                 else -> {
                 }
             }
         }
     }
 
-    private fun setupAugmentedImageDatabase(config: Config): Boolean {
-        val augmentedImageDatabase: AugmentedImageDatabase = if (useSingleImage) {
-            val augmentedImageBitmap = loadAugmentedImageBitmap() ?: return false
-            val session = session ?: return false
-            AugmentedImageDatabase(session).apply {
-                addImage("image_name", augmentedImageBitmap)
-            }
-        } else {
-            try {
-                val `is`: InputStream = assets.open("sample_database.imgdb")
-                AugmentedImageDatabase.deserialize(session!!, `is`)
-            } catch (e: IOException) {
-                Log.e(TAG, "IO exception loading augmented image database.", e)
-                return false
-            }
-        }
-        config.augmentedImageDatabase = augmentedImageDatabase
-        return true
-    }
-
     private suspend fun setupAugmentedImageDatabaseFromUrl(config: Config): Boolean {
         try {
-        val augmentedImageBitmap = loadAugmentedImageUrlBitmap()
-        val augmentedImageDatabase = AugmentedImageDatabase(session).apply {
-            addImage("image_name", augmentedImageBitmap)
-        }
-        config.augmentedImageDatabase = augmentedImageDatabase
-        fitToScanView?.visibility = View.VISIBLE
-        surfaceView?.visibility = View.VISIBLE
-        binding.pbLoading.visibility = View.GONE
+            val augmentedImageBitmap = loadAugmentedImageUrlBitmap()
+            val augmentedImageDatabase = AugmentedImageDatabase(session).apply {
+                addImage("image_name", augmentedImageBitmap)
+            }
+            config.augmentedImageDatabase = augmentedImageDatabase
+            fitToScanView?.visibility = View.VISIBLE
+            surfaceView?.visibility = View.VISIBLE
+            binding.pbLoading.visibility = View.GONE
 
         } catch (e: NullPointerException) {
-            messageSnackbarHelper.showError(
-                this@MainActivity,
-                "Minimal kasi foto yg bener"
-            )
+//            messageSnackbarHelper.showError(
+//                this@MainActivity,
+//                "Minimal kasi foto yg bener"
+//            )
         } catch (e: ImageInsufficientQualityException) {
-            messageSnackbarHelper.showError(
-                this@MainActivity,
-                "Fotonya jelek (too few features)"
-            )
+//            messageSnackbarHelper.showError(
+//                this@MainActivity,
+//                "Fotonya jelek (too few features)"
+//            )
         } catch (e: Exception) {
             messageSnackbarHelper.showError(
                 this@MainActivity,
@@ -317,17 +318,6 @@ class MainActivity : AppCompatActivity(), GLSurfaceView.Renderer {
         }
 
         return true
-    }
-
-
-    private fun loadAugmentedImageBitmap(): Bitmap? {
-        return try {
-            val `is`: InputStream = assets.open("default.jpg")
-            BitmapFactory.decodeStream(`is`)
-        } catch (e: IOException) {
-            Log.e(TAG, "IO exception loading augmented image bitmap.", e)
-            null
-        }
     }
 
     private suspend fun loadAugmentedImageUrlBitmap(): Bitmap? {
@@ -344,6 +334,5 @@ class MainActivity : AppCompatActivity(), GLSurfaceView.Renderer {
 
     companion object {
         private const val TAG = "MainActivity"
-        private const val useSingleImage = true
     }
 }
