@@ -1,37 +1,31 @@
 package com.pkm.pinme.ui.main
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.hardware.SensorManager
-import android.net.Uri
 import android.opengl.GLES20
 import android.opengl.GLSurfaceView
+import android.os.Build
 import android.os.Bundle
-import android.os.Environment
 import android.util.Log
 import android.util.Pair
-import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
 import android.widget.ImageView
+import android.window.OnBackInvokedDispatcher
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
-import com.bumptech.glide.RequestManager
+import androidx.core.os.BuildCompat
 import com.google.ar.core.Anchor
 import com.google.ar.core.ArCoreApk
 import com.google.ar.core.AugmentedImage
 import com.google.ar.core.AugmentedImageDatabase
-import com.google.ar.core.Camera
 import com.google.ar.core.Config
 import com.google.ar.core.Frame
-import com.google.ar.core.Pose
-import com.google.ar.core.RecordingConfig
-import com.google.ar.core.RecordingStatus
 import com.google.ar.core.Session
-import com.google.ar.core.Track
 import com.google.ar.core.TrackingState
 import com.google.ar.core.exceptions.ImageInsufficientQualityException
-import com.google.ar.core.exceptions.RecordingFailedException
 import com.google.ar.core.exceptions.UnavailableApkTooOldException
 import com.google.ar.core.exceptions.UnavailableArcoreNotInstalledException
 import com.google.ar.core.exceptions.UnavailableSdkTooOldException
@@ -43,24 +37,15 @@ import com.pkm.common.rendering.BackgroundRenderer
 import com.pkm.pinme.R
 import com.pkm.pinme.databinding.ActivityMainBinding
 import com.pkm.pinme.rendering.AugmentedImageRenderer
+import com.pkm.pinme.ui.scan.ScanQRActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Dispatchers.Main
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.File
-import java.io.FileOutputStream
 import java.io.IOException
-import java.io.InputStream
 import java.net.URL
-import java.nio.ByteBuffer
-import java.nio.IntBuffer
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
-import java.util.Locale
 import java.util.UUID
-import java.util.concurrent.atomic.AtomicReference
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 
@@ -81,23 +66,11 @@ class MainActivity : AppCompatActivity(), GLSurfaceView.Renderer {
     private var shouldConfigureSession = false
     private val augmentedImageMap: MutableMap<Int, Pair<AugmentedImage, Anchor>> = HashMap()
 
-    private val MP4_DATASET_FILENAME_TEMPLATE = "arcore-dataset-%s.mp4"
-    private val MP4_DATASET_TIMESTAMP_FORMAT = "yyyy-MM-dd-HH-mm-ss"
-
-    private val ANCHOR_TRACK_ID = UUID.fromString("a65e59fc-2e13-4607-b514-35302121c138")
-    private val ANCHOR_TRACK_MIME_TYPE = "application/hello-recording-playback-anchor"
-
-    private var lastRecordingDatasetPath: String? = null
-
-    private var playbackDatasetPath: String? = null
-
     private var mWidth = 0
     private var mHeight = 0
-    private var capturePicture = false
 
     private lateinit var url: String
 
-    @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         val intent = intent
         url = intent.getStringExtra("url").toString()
@@ -121,6 +94,15 @@ class MainActivity : AppCompatActivity(), GLSurfaceView.Renderer {
         }
         fitToScanView = findViewById(R.id.image_view_fit_to_scan)
         installRequested = false
+    }
+
+    @Deprecated("This method has been deprecated in favor of using the\n      {@link OnBackPressedDispatcher} via {@link #getOnBackPressedDispatcher()}.\n      The OnBackPressedDispatcher controls how back button events are dispatched\n      to one or more {@link OnBackPressedCallback} objects.")
+    override fun onBackPressed() {
+        super.onBackPressed()
+        val intentScan = Intent(this@MainActivity, ScanQRActivity::class.java)
+        intentScan.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        startActivity(intentScan)
+        finish()
     }
 
     override fun onDestroy() {

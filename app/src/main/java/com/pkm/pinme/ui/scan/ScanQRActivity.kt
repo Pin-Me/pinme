@@ -25,8 +25,8 @@ import com.pkm.pinme.R
 import com.pkm.pinme.databinding.ActivityScanQrBinding
 import com.pkm.pinme.factory.ViewModelFactory
 import com.pkm.pinme.ui.main.MainActivity
-import com.saadahmedev.popupdialog.PopupDialog
 import com.pkm.pinme.utils.Result
+import com.saadahmedev.popupdialog.PopupDialog
 import com.saadahmedev.popupdialog.listener.StandardDialogActionListener
 
 class ScanQRActivity : AppCompatActivity() {
@@ -56,7 +56,13 @@ class ScanQRActivity : AppCompatActivity() {
         setContentView(activityScanQRBinding.root)
         setViewModelFactory()
 
+        initiateScan()
         requestPermissions(getPermissionsForTargetSDK())
+    }
+
+    override fun onRestart() {
+        super.onRestart()
+        codeScanner.startPreview()
     }
 
     private fun requestFilter(filterId: String) {
@@ -115,7 +121,7 @@ class ScanQRActivity : AppCompatActivity() {
 
                                 val intent = Intent(this@ScanQRActivity, MainActivity::class.java)
                                 intent.putExtra("url", result.data.marker)
-
+                                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                                 startActivity(intent)
                                 dialog.dismiss()
                             }
@@ -141,6 +147,18 @@ class ScanQRActivity : AppCompatActivity() {
         codeScanner.isAutoFocusEnabled = true
         codeScanner.isFlashEnabled = false
         codeScanner.startPreview()
+        codeScanner.decodeCallback = DecodeCallback {
+            runOnUiThread {
+                requestFilter(it.text)
+            }
+        }
+        codeScanner.errorCallback = ErrorCallback { // or ErrorCallback.SUPPRESS
+            runOnUiThread {
+                Toast.makeText(this, "Aplikasi memerlukan akses camera dan penyimpanan",
+                    Toast.LENGTH_LONG).show()
+            }
+        }
+
         activityScanQRBinding.flashBtn.setOnClickListener {
             enableFlash = !enableFlash
             if (enableFlash) {
@@ -151,17 +169,7 @@ class ScanQRActivity : AppCompatActivity() {
                 activityScanQRBinding.flashBtn.setBackgroundResource(R.drawable.flash_off_ic)
             }
         }
-        codeScanner.decodeCallback = DecodeCallback {
-            runOnUiThread {
-                requestFilter(it.text)
-            }
-        }
-        codeScanner.errorCallback = ErrorCallback { // or ErrorCallback.SUPPRESS
-            runOnUiThread {
-                Toast.makeText(this, "Camera initialization error: ${it.message}",
-                    Toast.LENGTH_LONG).show()
-            }
-        }
+
         activityScanQRBinding.historyBtn.setOnClickListener {
             setGrayBackground(true)
             PopupDialog.getInstance(this)
@@ -184,6 +192,7 @@ class ScanQRActivity : AppCompatActivity() {
         requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
             if (permissions.all { it.value }) {
                 Log.e("PERMISSIONS", "Granted")
+                codeScanner.startPreview()
             } else {
                 Log.e("PERMISSIONS", "Not all permissions were granted")
             }
@@ -195,7 +204,7 @@ class ScanQRActivity : AppCompatActivity() {
         if (permissionsNotGranted.isNotEmpty()) {
             requestPermissionLauncher.launch(permissionsNotGranted.toTypedArray())
         } else {
-            initiateScan()
+            codeScanner.startPreview()
         }
     }
 

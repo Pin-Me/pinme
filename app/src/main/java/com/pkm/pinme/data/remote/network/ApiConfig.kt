@@ -19,7 +19,7 @@ class ApiConfig {
                 .build()
 
             return Retrofit.Builder()
-                .baseUrl("https://15996cee-706a-44c8-9516-71da9c8987ba.mock.pstmn.io")
+                .baseUrl("https://ece6a328-5748-476b-a8d4-0b047de5b091.mock.pstmn.io")
                 .client(client)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build()
