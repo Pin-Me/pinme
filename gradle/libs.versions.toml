@@ -1,9 +1,9 @@
 [versions]
 agp = "8.4.1"
 codeScanner = "2.3.0"
-core = "1.42.0"
 coreSplashscreen = "1.0.1"
 coreVersion = "3.3.3"
+filamatAndroid = "1.21.1"
 glide = "4.16.0"
 kotlin = "1.9.0"
 coreKtx = "1.13.1"
@@ -26,6 +26,7 @@ navigationFragmentKtx = "2.7.7"
 navigationUiKtx = "2.7.7"
 popupDialog = "2.0.0"
 retrofit = "2.9.0"
+sceneform = "1.23.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -34,17 +35,16 @@ androidx-lifecycle-livedata-ktx = { module = "androidx.lifecycle:lifecycle-lived
 androidx-lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycleViewmodelKtx" }
 androidx-lifecycle-viewmodel-ktx = { module = "androidx.lifecycle:lifecycle-viewmodel-ktx", version.ref = "lifecycleViewmodelKtx" }
 androidx-lifecycle-viewmodel-ktx-v262 = { module = "androidx.lifecycle:lifecycle-viewmodel-ktx", version.ref = "lifecycleViewmodelKtxVersion" }
-ar-core = { module = "com.google.ar:core", version.ref = "core" }
 code-scanner = { module = "com.github.yuriy-budiyev:code-scanner", version.ref = "codeScanner" }
 converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "retrofit" }
 core = { module = "com.google.zxing:core", version.ref = "coreVersion" }
+filamat-android = { module = "com.google.android.filament:filamat-android", version.ref = "filamatAndroid" }
 glide = { module = "com.github.bumptech.glide:glide", version.ref = "glide" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutinesCore" }
-kotlinx-coroutines-core-v151 = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutinesCoreVersion" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinxCoroutinesCore" }
 logging-interceptor = { module = "com.squareup.okhttp3:logging-interceptor", version.ref = "loggingInterceptor" }
 lottie = { module = "com.airbnb.android:lottie", version.ref = "lottie" }
@@ -56,6 +56,7 @@ androidx-navigation-fragment-ktx = { group = "androidx.navigation", name = "navi
 androidx-navigation-ui-ktx = { group = "androidx.navigation", name = "navigation-ui-ktx", version.ref = "navigationUiKtx" }
 popup-dialog = { module = "com.saadahmedev.popup-dialog:popup-dialog", version.ref = "popupDialog" }
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
+sceneform = { module = "com.gorisse.thomas.sceneform:sceneform", version.ref = "sceneform" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

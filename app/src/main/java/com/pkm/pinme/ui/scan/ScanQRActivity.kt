@@ -24,6 +24,7 @@ import com.budiyev.android.codescanner.ScanMode
 import com.pkm.pinme.R
 import com.pkm.pinme.databinding.ActivityScanQrBinding
 import com.pkm.pinme.factory.ViewModelFactory
+import com.pkm.pinme.ui.main.MainActivit
 import com.pkm.pinme.ui.main.MainActivity
 import com.pkm.pinme.utils.Result
 import com.saadahmedev.popupdialog.PopupDialog
@@ -36,9 +37,8 @@ class ScanQRActivity : AppCompatActivity() {
 
     // Permissions
     @RequiresApi(VERSION_CODES.TIRAMISU)
-    private val permissionAndroidTAbove = arrayOf(permission.CAMERA, permission.READ_MEDIA_VIDEO)
-    private val permissionAndroidSBelow =
-        arrayOf(permission.CAMERA, permission.WRITE_EXTERNAL_STORAGE)
+    private val permissionAndroidTAbove = arrayOf(permission.CAMERA, permission.READ_MEDIA_VIDEO, permission.RECORD_AUDIO)
+    private val permissionAndroidSBelow = arrayOf(permission.CAMERA, permission.WRITE_EXTERNAL_STORAGE, permission.RECORD_AUDIO)
     private lateinit var requestPermissionLauncher: ActivityResultLauncher<Array<String>>
 
     // ViewModel
@@ -119,8 +119,9 @@ class ScanQRActivity : AppCompatActivity() {
                             override fun onPositiveButtonClicked(dialog: Dialog) {
                                 setGrayBackground(false)
 
-                                val intent = Intent(this@ScanQRActivity, MainActivity::class.java)
+                                val intent = Intent(this@ScanQRActivity, MainActivit::class.java)
                                 intent.putExtra("url", result.data.marker)
+                                intent.putExtra("ar", result.data.ar?.get(0)?.ar)
                                 intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                                 startActivity(intent)
                                 dialog.dismiss()

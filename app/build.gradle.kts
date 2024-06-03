@@ -41,7 +41,6 @@ android {
 }
 
 dependencies {
-    implementation (libs.ar.core)
     implementation (libs.obj)
     implementation (libs.glide)
     implementation(libs.androidx.core.splashscreen)
@@ -49,7 +48,8 @@ dependencies {
     implementation (libs.popup.dialog)
     implementation (libs.code.scanner)
     implementation (libs.lottie)
-
+    implementation (libs.sceneform)
+    implementation (libs.filamat.android)
 
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
