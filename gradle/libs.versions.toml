@@ -1,5 +1,5 @@
 [versions]
-agp = "8.3.2"
+agp = "8.4.1"
 codeScanner = "2.3.0"
 core = "1.42.0"
 coreSplashscreen = "1.0.1"

@@ -1,9 +1,11 @@
 package com.pkm.pinme.repository
 
+import android.content.Context
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.liveData
+import com.pkm.pinme.data.remote.download.AndroidDownloader
 import com.pkm.pinme.data.remote.network.ApiService
-import com.pkm.pinme.data.remote.response.FilterData
+import com.pkm.pinme.data.remote.response.FilterModel
 import com.pkm.pinme.utils.Result
 import java.lang.Exception
 
@@ -12,14 +14,18 @@ class PinMeRepository(
 ) {
 
 
-    fun getFilter(filterId: String): LiveData<Result<FilterData>> = liveData {
+    fun getFilter(filterId: String, context: Context): LiveData<Result<FilterModel>> = liveData {
         emit(Result.Loading)
         try {
             val getFilterRes = apiService.getFilter(filterId)
-            if (!getFilterRes.error)
+            if (!getFilterRes.error) {
+                val downloader = AndroidDownloader(context)
+                downloader.downloadFile(getFilterRes.data.marker.toString(), getFilterRes.data.id.toString())
                 emit(Result.Success(getFilterRes.data))
-            else
+            }
+            else {
                 emit(Result.Error(getFilterRes.message))
+            }
         } catch (e: Exception) {
             emit(Result.Error("AR Tidak Ditemukan"))
         }

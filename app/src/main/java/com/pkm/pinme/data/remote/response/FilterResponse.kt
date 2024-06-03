@@ -7,13 +7,13 @@ import com.google.gson.annotations.SerializedName
 @Parcelize
 data class FilterResponse(
 
-	@field:SerializedName("data")
-	val data: FilterData,
+    @field:SerializedName("data")
+	val data: FilterModel,
 
-	@field:SerializedName("error")
+    @field:SerializedName("error")
 	val error: Boolean,
 
-	@field:SerializedName("message")
+    @field:SerializedName("message")
 	val message: String
 ) : Parcelable
 
@@ -46,7 +46,7 @@ data class ArItem(
 ) : Parcelable
 
 @Parcelize
-data class FilterData(
+data class FilterModel(
 
 	@field:SerializedName("preview")
 	val preview: String? = null,

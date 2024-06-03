@@ -66,7 +66,7 @@ class ScanQRActivity : AppCompatActivity() {
     }
 
     private fun requestFilter(filterId: String) {
-        viewModel.getFilter(filterId).observe(this) { result ->
+        viewModel.getFilter(filterId, this).observe(this) { result ->
             when (result) {
                 is Result.Loading -> {
                     setGrayBackground(true)
