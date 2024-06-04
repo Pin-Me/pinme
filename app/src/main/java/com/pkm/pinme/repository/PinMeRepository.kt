@@ -19,8 +19,6 @@ class PinMeRepository(
         try {
             val getFilterRes = apiService.getFilter(filterId)
             if (!getFilterRes.error) {
-                val downloader = AndroidDownloader(context)
-                downloader.downloadFile(getFilterRes.data.marker.toString(), getFilterRes.data.id.toString())
                 emit(Result.Success(getFilterRes.data))
             }
             else {
