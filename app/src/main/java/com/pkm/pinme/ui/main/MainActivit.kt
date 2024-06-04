@@ -38,6 +38,7 @@ import com.google.ar.sceneform.ux.TransformableNode
 import com.pkm.common.helper.VideoRecorder
 import com.pkm.pinme.R
 import com.pkm.pinme.databinding.ActivitMainBinding
+import com.pkm.pinme.ui.scan.ScanQRActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -50,7 +51,6 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.concurrent.CompletableFuture
-
 
 class MainActivit : AppCompatActivity(), FragmentOnAttachListener,
     OnSessionConfigurationListener {
@@ -127,7 +127,7 @@ class MainActivit : AppCompatActivity(), FragmentOnAttachListener,
 
         database = AugmentedImageDatabase(session)
 
-        database.addImage("rabbit", marker)
+        database.addImage("AR", marker)
         config.setAugmentedImageDatabase(database)
         config.setFocusMode(Config.FocusMode.AUTO)
 
@@ -152,11 +152,11 @@ class MainActivit : AppCompatActivity(), FragmentOnAttachListener,
             // Setting anchor to the center of Augmented Image
             val anchorNode = AnchorNode(augmentedImage.createAnchor(augmentedImage.centerPose))
 
-            if (!rabbitDetected && augmentedImage.name == "rabbit") {
+            if (!rabbitDetected && augmentedImage.name == "AR") {
                 rabbitDetected = true
-                Toast.makeText(this, "${augmentedImage.name} tag detected", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "AR tag detected", Toast.LENGTH_LONG).show()
 
-                anchorNode.worldScale = Vector3(1f, 1f, 1f)
+                anchorNode.worldScale = Vector3(0.25f, 0.25f, 0.25f)
                 arFragment.arSceneView.scene.addChild(anchorNode)
 
                 futures.add(ModelRenderable.builder()
@@ -172,11 +172,8 @@ class MainActivit : AppCompatActivity(), FragmentOnAttachListener,
                         anchorNode.addChild(modelNode)
                     }
                     .exceptionally {
-                        Toast.makeText(
-                            this,
-                            "Unable to load rabbit model",
-                            Toast.LENGTH_LONG
-                        ).show()
+                        Toast.makeText(this, it.message, Toast.LENGTH_LONG).show()
+                        Log.e("ERROR LOAD AR", it.message.toString())
                         null
                     })
             }
@@ -298,4 +295,12 @@ class MainActivit : AppCompatActivity(), FragmentOnAttachListener,
         }
     }
 
+    @Deprecated("This method has been deprecated in favor of using the\n      {@link OnBackPressedDispatcher} via {@link #getOnBackPressedDispatcher()}.\n      The OnBackPressedDispatcher controls how back button events are dispatched\n      to one or more {@link OnBackPressedCallback} objects.")
+    override fun onBackPressed() {
+        super.onBackPressed()
+        val intentScan = Intent(this@MainActivit, ScanQRActivity::class.java)
+        intentScan.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        startActivity(intentScan)
+        finish()
+    }
 }
