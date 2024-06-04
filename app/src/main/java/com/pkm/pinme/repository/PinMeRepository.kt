@@ -3,11 +3,9 @@ package com.pkm.pinme.repository
 import android.content.Context
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.liveData
-import com.pkm.pinme.data.remote.download.AndroidDownloader
 import com.pkm.pinme.data.remote.network.ApiService
 import com.pkm.pinme.data.remote.response.FilterModel
 import com.pkm.pinme.utils.Result
-import java.lang.Exception
 
 class PinMeRepository(
     private var apiService: ApiService

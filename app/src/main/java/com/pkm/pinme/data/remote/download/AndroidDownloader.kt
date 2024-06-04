@@ -5,7 +5,6 @@ import android.content.Context
 import android.os.Environment
 import android.util.Log
 import androidx.core.net.toUri
-import java.util.logging.Logger
 
 class AndroidDownloader(private val context: Context) : Downloader {
 

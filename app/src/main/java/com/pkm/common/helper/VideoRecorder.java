@@ -5,12 +5,13 @@ import android.icu.text.SimpleDateFormat;
 import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
 import android.media.MediaScannerConnection;
-import android.net.Uri;
 import android.os.Environment;
 import android.util.Log;
 import android.util.Size;
 import android.view.Surface;
+
 import com.google.ar.sceneform.SceneView;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Date;

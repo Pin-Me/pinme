@@ -25,7 +25,6 @@ import com.pkm.pinme.R
 import com.pkm.pinme.databinding.ActivityScanQrBinding
 import com.pkm.pinme.factory.ViewModelFactory
 import com.pkm.pinme.ui.main.MainActivit
-import com.pkm.pinme.ui.main.MainActivity
 import com.pkm.pinme.utils.Result
 import com.saadahmedev.popupdialog.PopupDialog
 import com.saadahmedev.popupdialog.listener.StandardDialogActionListener
