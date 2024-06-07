@@ -3,7 +3,9 @@ package com.pkm.pinme.ui.main
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.media.AudioManager
 import android.media.CamcorderProfile
+import android.media.MediaPlayer
 import android.media.MediaScannerConnection
 import android.net.Uri
 import android.os.Bundle
@@ -61,17 +63,24 @@ class MainActivit : AppCompatActivity(), FragmentOnAttachListener,
     private lateinit var arFragment: ArFragment
     private var rabbitDetected = false
     private lateinit var database: AugmentedImageDatabase
-    private var marker : Bitmap? = null
     private val videoRecorder : VideoRecorder = VideoRecorder()
+    private var marker : Bitmap? = null
     private var arUrl : String? = null
+    private var soundUrl : String? = null
+    lateinit var mediaPlayer: MediaPlayer
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val intent = intent
         val url = intent.getStringExtra("url").toString()
         arUrl = intent.getStringExtra("ar").toString()
+        soundUrl = intent.getStringExtra("sound").toString()
+        mediaPlayer = MediaPlayer()
+
         runBlocking {
+            mediaPlayer.setDataSource("https://github.com/Pin-Me/dummy-files/blob/main/guiro-sweep-156002.mp3?raw=true")
             marker = loadAugmentedImageUrlBitmap(url)
         }
+
 
         super.onCreate(savedInstanceState)
         binding = ActivitMainBinding.inflate(layoutInflater)
@@ -110,8 +119,18 @@ class MainActivit : AppCompatActivity(), FragmentOnAttachListener,
             }
         }
 
+        mediaPlayer.prepare()
+
         binding.fabShotBtn.setOnClickListener {
-            takePhoto()
+            try {
+                mediaPlayer.start()
+
+            } catch (e: Exception) {
+
+                // on below line we are handling our exception.
+                e.printStackTrace()
+            }
+//            takePhoto()
         }
     }
     override fun onAttachFragment(fragmentManager: FragmentManager, fragment: Fragment) {
@@ -170,6 +189,14 @@ class MainActivit : AppCompatActivity(), FragmentOnAttachListener,
                         )
                         modelNode.setRenderable(rabbitModel)
                         anchorNode.addChild(modelNode)
+                        try {
+                            mediaPlayer.start()
+
+                        } catch (e: Exception) {
+
+                            // on below line we are handling our exception.
+                            e.printStackTrace()
+                        }
                     }
                     .exceptionally {
                         Toast.makeText(this, it.message, Toast.LENGTH_LONG).show()

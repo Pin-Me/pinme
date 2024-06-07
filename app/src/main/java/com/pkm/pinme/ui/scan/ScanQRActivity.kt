@@ -121,6 +121,7 @@ class ScanQRActivity : AppCompatActivity() {
                                 val intent = Intent(this@ScanQRActivity, MainActivit::class.java)
                                 intent.putExtra("url", result.data.marker)
                                 intent.putExtra("ar", result.data.ar?.get(0)?.ar)
+                                intent.putExtra("sound", result.data.sound)
                                 intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                                 startActivity(intent)
                                 dialog.dismiss()
