@@ -1,54 +1,36 @@
 package com.pkm.pinme.ui.main
 
 import android.content.Intent
-import android.graphics.Bitmap
 import android.media.CamcorderProfile
-import android.media.MediaScannerConnection
-import android.net.Uri
 import android.os.Bundle
-import android.os.Environment
-import android.os.Handler
-import android.os.HandlerThread
 import android.util.DisplayMetrics
 import android.util.Log
-import android.view.PixelCopy
 import android.view.View
 import android.view.WindowManager
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentOnAttachListener
-import com.google.android.material.snackbar.Snackbar
 import com.google.ar.core.AugmentedImage
 import com.google.ar.core.Config
 import com.google.ar.core.Session
 import com.google.ar.core.TrackingState
 import com.google.ar.sceneform.AnchorNode
-import com.google.ar.sceneform.ArSceneView
 import com.google.ar.sceneform.Sceneform
 import com.google.ar.sceneform.math.Vector3
 import com.google.ar.sceneform.ux.ArFragment
 import com.google.ar.sceneform.ux.BaseArFragment.OnSessionConfigurationListener
 import com.google.ar.sceneform.ux.TransformableNode
 import com.pkm.pinme.R
-import com.pkm.pinme.databinding.ActivitMainBinding
+import com.pkm.pinme.databinding.ActivityMainBinding
 import com.pkm.pinme.factory.ViewModelFactory
 import com.pkm.pinme.ui.scan.ScanQRActivity
-import java.io.ByteArrayOutputStream
-import java.io.File
-import java.io.FileOutputStream
-import java.io.IOException
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-import java.util.concurrent.CompletableFuture
 
-class MainActivit : AppCompatActivity(), FragmentOnAttachListener, OnSessionConfigurationListener {
+class MainActivity : AppCompatActivity(), FragmentOnAttachListener, OnSessionConfigurationListener {
 
-    private lateinit var binding: ActivitMainBinding
+    private lateinit var binding: ActivityMainBinding
 
     private lateinit var arFragment: ArFragment
     private var rabbitDetected = false
@@ -67,7 +49,7 @@ class MainActivit : AppCompatActivity(), FragmentOnAttachListener, OnSessionConf
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivitMainBinding.inflate(layoutInflater)
+        binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         setViewModelFactory()
         getScreenSize()
@@ -193,7 +175,7 @@ class MainActivit : AppCompatActivity(), FragmentOnAttachListener, OnSessionConf
     @Deprecated("This method has been deprecated in favor of using the\n      {@link OnBackPressedDispatcher} via {@link #getOnBackPressedDispatcher()}.\n      The OnBackPressedDispatcher controls how back button events are dispatched\n      to one or more {@link OnBackPressedCallback} objects.")
     override fun onBackPressed() {
         super.onBackPressed()
-        val intentScan = Intent(this@MainActivit, ScanQRActivity::class.java)
+        val intentScan = Intent(this@MainActivity, ScanQRActivity::class.java)
         intentScan.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intentScan)
         finish()

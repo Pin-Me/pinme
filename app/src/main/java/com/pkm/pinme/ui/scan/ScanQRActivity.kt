@@ -27,7 +27,7 @@ import com.budiyev.android.codescanner.ScanMode
 import com.pkm.pinme.R
 import com.pkm.pinme.databinding.ActivityScanQrBinding
 import com.pkm.pinme.factory.ViewModelFactory
-import com.pkm.pinme.ui.main.MainActivit
+import com.pkm.pinme.ui.main.MainActivity
 import com.pkm.pinme.utils.Result
 import com.saadahmedev.popupdialog.PopupDialog
 import com.saadahmedev.popupdialog.listener.StandardDialogActionListener
@@ -119,7 +119,7 @@ class ScanQRActivity : AppCompatActivity() {
                             .build(object : StandardDialogActionListener {
                                 override fun onPositiveButtonClicked(dialog: Dialog) {
                                     setGrayBackground(false)
-                                    val intent = Intent(this@ScanQRActivity, MainActivit::class.java)
+                                    val intent = Intent(this@ScanQRActivity, MainActivity::class.java)
                                     intent.putExtra("markerUrl", result.data.marker)
                                     intent.putExtra("arUrl", result.data.ar?.get(0)?.ar)
                                     intent.putExtra("soundUrl", result.data.sound)
