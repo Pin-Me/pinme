@@ -2,6 +2,7 @@ package com.pkm.pinme.ui.main
 
 import android.content.Intent
 import android.graphics.Bitmap
+import android.media.CamcorderProfile
 import android.media.MediaScannerConnection
 import android.net.Uri
 import android.os.Bundle
@@ -23,12 +24,14 @@ import androidx.fragment.app.FragmentOnAttachListener
 import com.google.android.material.snackbar.Snackbar
 import com.google.ar.core.AugmentedImage
 import com.google.ar.core.Config
+import com.google.ar.core.Session
 import com.google.ar.core.TrackingState
 import com.google.ar.sceneform.AnchorNode
 import com.google.ar.sceneform.ArSceneView
 import com.google.ar.sceneform.Sceneform
 import com.google.ar.sceneform.math.Vector3
 import com.google.ar.sceneform.ux.ArFragment
+import com.google.ar.sceneform.ux.BaseArFragment.OnSessionConfigurationListener
 import com.google.ar.sceneform.ux.TransformableNode
 import com.pkm.pinme.R
 import com.pkm.pinme.databinding.ActivitMainBinding
@@ -43,13 +46,15 @@ import java.util.Date
 import java.util.Locale
 import java.util.concurrent.CompletableFuture
 
-class MainActivit : AppCompatActivity(), FragmentOnAttachListener {
+class MainActivit : AppCompatActivity(), FragmentOnAttachListener, OnSessionConfigurationListener {
 
     private lateinit var binding: ActivitMainBinding
 
-    private val futures: MutableList<CompletableFuture<Void>> = ArrayList()
     private lateinit var arFragment: ArFragment
     private var rabbitDetected = false
+
+    // AR
+    private var markerUrl: String? = null
     private var arUrl: String? = null
     private var soundUrl: String? = null
 
@@ -57,31 +62,33 @@ class MainActivit : AppCompatActivity(), FragmentOnAttachListener {
     private lateinit var factory: ViewModelFactory
     private val viewModel: MainViewModel by viewModels { factory }
 
+    var recordingWidth: Int = 0
+    var recordingHeight: Int = 0
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivitMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         setViewModelFactory()
+        getScreenSize()
         setupUI()
 
-        val url = "https://yt3.googleusercontent.com/cFv0K1fb4MjrZcnq0ntEkRU99ADunvfvFZ1APEr6nmJlRsAMwKPYVpiUb2C1UxfUjc14ajM=s900-c-k-c0x00ffffff-no-rj"
-        arUrl = "https://github.com/Pin-Me/dummy-files/blob/main/Rabbit.glb?raw=true"
-        soundUrl = "https://github.com/Pin-Me/dummy-files/blob/main/guiro-sweep-156002.mp3?raw=true"
+        markerUrl = intent.getStringExtra("markerUrl")
+        arUrl = intent.getStringExtra("arUrl")
+        soundUrl = intent.getStringExtra("soundUrl")
 
-        if (Sceneform.isSupported(this)) {
-            supportFragmentManager.addFragmentOnAttachListener(this)
-            supportFragmentManager.beginTransaction()
-                .add(R.id.arFragment, ArFragment::class.java, null)
-                .commit()
-        }
-
-        viewModel.configureAr(arUrl!!, soundUrl!!, url, this)
+        viewModel.configureAr(arUrl!!, soundUrl!!, markerUrl!!, this)
 
         viewModel.isConfigurationCompleted.observe(this) {
             if(it) {
-                applyARConfiguration()
+                if (Sceneform.isSupported(this)) {
+                    supportFragmentManager.addFragmentOnAttachListener(this)
+                    supportFragmentManager.beginTransaction()
+                        .add(R.id.arFragment, ArFragment::class.java, null)
+                        .commit()
+                }
             } else {
-                Log.e("ArConfig", "MASIH KOSONG")
+                Log.e("ArConfig", "Loading AR")
             }
         }
     }
@@ -89,29 +96,41 @@ class MainActivit : AppCompatActivity(), FragmentOnAttachListener {
     private fun setupUI() {
         viewModel.isLoading.observe(this) {
             if (it){
-                binding.blocLoading.visibility = View.VISIBLE
+                binding.loadingCard.visibility = View.VISIBLE
+                binding.fabRecordBtn.visibility = View.GONE
+                binding.fabShotBtn.visibility = View.GONE
             } else {
-                binding.blocLoading.visibility = View.GONE
+                binding.loadingCard.visibility = View.GONE
+                binding.fabRecordBtn.visibility = View.VISIBLE
+                binding.fabShotBtn.visibility = View.VISIBLE
             }
         }
-        val displayMetrics = DisplayMetrics()
-        val windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
-        windowManager.defaultDisplay.getMetrics(displayMetrics)
-        val width = displayMetrics.widthPixels
-        val height = displayMetrics.heightPixels
 
         binding.fabRecordBtn.setOnClickListener {
-            // Record button logic
+            viewModel.arSound?.start()
+            viewModel.videoRecorder.setSceneView(arFragment.arSceneView)
+            val orientation = this.getResources().configuration.orientation;
+            viewModel.videoRecorder.setVideoQuality(CamcorderProfile.QUALITY_720P, orientation)
+            viewModel.videoRecorder.setVideoSize(recordingWidth, recordingHeight)
+            viewModel.videoRecorder.setFrameRate(60)
+
+            val isRecording = viewModel.videoRecorder.onToggleRecord()
+            if (isRecording){
+                Toast.makeText(this,"Recording",Toast.LENGTH_LONG).show()
+            } else {
+                Toast.makeText(this,"Stop Recording",Toast.LENGTH_LONG).show()
+            }
         }
 
         binding.fabShotBtn.setOnClickListener {
-            // Shot button logic
+            viewModel.takePhoto(this, arFragment)
         }
     }
 
     override fun onAttachFragment(fragmentManager: FragmentManager, fragment: Fragment) {
         if (fragment.id == R.id.arFragment) {
             arFragment = fragment as ArFragment
+            arFragment.setOnSessionConfigurationListener(this)
         }
     }
 
@@ -136,112 +155,39 @@ class MainActivit : AppCompatActivity(), FragmentOnAttachListener {
                     arFragment.transformationSystem
                 )
 
-                modelNode.setRenderable(viewModel.getArModel())
+                modelNode.setRenderable(viewModel.arModel)
                 anchorNode.addChild(modelNode)
-                viewModel.getArSound()?.start()
+                viewModel.arSound?.start()
             }
         }
     }
 
-    private fun applyARConfiguration() {
-        val config = Config(arFragment.arSceneView.session)
-        config.setPlaneFindingMode(Config.PlaneFindingMode.DISABLED)
-        config.setFocusMode(Config.FocusMode.AUTO)
+    override fun onSessionConfiguration(session: Session?, config: Config?) {
+        config?.setPlaneFindingMode(Config.PlaneFindingMode.DISABLED)
+        config?.setFocusMode(Config.FocusMode.AUTO)
 
-        config.setAugmentedImageDatabase(viewModel.getAugmentedImageDatabase())
+        config?.setAugmentedImageDatabase(viewModel.augmentedImageDatabase)
         // Set the updated AR session configuration
-        arFragment.setSessionConfig(config, true)
         arFragment.setOnAugmentedImageUpdateListener { augmentedImage: AugmentedImage ->
             onAugmentedImageTrackingUpdate(augmentedImage)
         }
+        session?.resume()
+        session?.pause()
+        session?.resume()
     }
+
 
     private fun setViewModelFactory() {
         factory = ViewModelFactory.getInstance(binding.root.context)
     }
 
+    private fun getScreenSize() {
+        val displayMetrics = DisplayMetrics()
+        val windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
+        windowManager.defaultDisplay.getMetrics(displayMetrics)
 
-    private fun generateFilename(): String {
-        val date = SimpleDateFormat("yyyyMMddHHmmss", Locale.getDefault()).format(Date())
-        return Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
-            .toString() + "/PinMe/" + "PinMePicture_" + date + ".jpg"
-    }
-
-    private fun takePhoto() {
-        val filename = generateFilename()
-        val view: ArSceneView = arFragment.arSceneView
-
-        val bitmap = Bitmap.createBitmap(view.width, view.height, Bitmap.Config.ARGB_8888)
-        val handlerThread = HandlerThread("PixelCopier")
-        handlerThread.start()
-
-        PixelCopy.request(view, bitmap, { copyResult ->
-            if (copyResult == PixelCopy.SUCCESS) {
-                try {
-                    saveBitmapToDisk(bitmap, filename)
-                } catch (e: IOException) {
-                    val toast = Toast.makeText(this, e.toString(), Toast.LENGTH_LONG)
-                    toast.show()
-                    return@request
-                }
-                val snackbar = Snackbar.make(
-                    findViewById(android.R.id.content), "Photo saved", Snackbar.LENGTH_LONG
-                )
-                snackbar.setAction("Open in Photos") { v: View? ->
-                    val photoFile = File(filename)
-                    val photoURI = FileProvider.getUriForFile(
-                        this, this.packageName.toString() + ".ar.codelab.name.provider", photoFile
-                    )
-                    val intent = Intent(Intent.ACTION_VIEW, photoURI)
-                    intent.setDataAndType(photoURI, "image/*")
-                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                    startActivity(intent)
-                }
-                snackbar.show()
-            } else {
-                val toast = Toast.makeText(this, "Failed to copyPixels: $copyResult", Toast.LENGTH_LONG)
-                toast.show()
-            }
-            handlerThread.quitSafely()
-        }, Handler(handlerThread.looper))
-    }
-
-    @Throws(IOException::class)
-    private fun saveBitmapToDisk(bitmap: Bitmap, filename: String) {
-        val out = File(filename)
-        if (!out.parentFile.exists()) {
-            out.parentFile.mkdirs()
-        }
-        try {
-            FileOutputStream(filename).use { outputStream ->
-                ByteArrayOutputStream().use { outputData ->
-                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputData)
-                    outputData.writeTo(outputStream)
-                    outputStream.flush()
-                    outputStream.close()
-                }
-            }
-        } catch (ex: IOException) {
-            throw IOException("Failed to save bitmap to disk", ex)
-        }
-
-        MediaScannerConnection.scanFile(
-            this,
-            arrayOf(filename),
-            null
-        ) { path: String, uri: Uri ->
-            Log.i("INFO", "-> uri=$uri")
-        }
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-
-        futures.forEach { future ->
-            if (!future.isDone) {
-                future.cancel(true)
-            }
-        }
+        recordingWidth = displayMetrics.widthPixels
+        recordingHeight = displayMetrics.heightPixels
     }
 
     @Deprecated("This method has been deprecated in favor of using the\n      {@link OnBackPressedDispatcher} via {@link #getOnBackPressedDispatcher()}.\n      The OnBackPressedDispatcher controls how back button events are dispatched\n      to one or more {@link OnBackPressedCallback} objects.")

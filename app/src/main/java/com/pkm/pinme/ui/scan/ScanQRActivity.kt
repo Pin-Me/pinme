@@ -8,7 +8,10 @@ import android.graphics.Color
 import android.os.Build
 import android.os.Build.VERSION_CODES
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
+import android.view.View
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -69,17 +72,13 @@ class ScanQRActivity : AppCompatActivity() {
             when (result) {
                 is Result.Loading -> {
                     setGrayBackground(true)
-                    loadingDialog = PopupDialog.getInstance(this)
-                        .progressDialogBuilder()
-                        .createLottieDialog()
-                        .setCancelable(false)
-                        .setRawRes(R.raw.loading_bloc_anim)
-                        .build()
-                    loadingDialog?.show()
+                    activityScanQRBinding.loadingCard.visibility = View.VISIBLE
                 }
 
                 is Result.Error -> {
-                    loadingDialog?.dismiss()
+                    Handler(Looper.getMainLooper()).postDelayed({
+                        activityScanQRBinding.loadingCard.visibility = View.GONE
+                        loadingDialog?.dismiss()
                         setGrayBackground(true)
                         PopupDialog.getInstance(this)
                             .statusDialogBuilder()
@@ -95,45 +94,48 @@ class ScanQRActivity : AppCompatActivity() {
                                 it.dismiss()
                             }
                             .show();
+                    }, 1000)
                 }
 
                 is Result.Success -> {
-                    loadingDialog?.dismiss()
-                    val successDialog = PopupDialog.getInstance(this)
-                        .standardDialogBuilder()
-                        .createStandardDialog()
-                        .setIcon(R.drawable.check_ic)
-                        .setPositiveButtonBackgroundColor(R.color.primary)
-                        .setFontFamily(R.font.spartan_mb_semibold)
-                        .setPositiveButtonTextColor(R.color.white)
-                        .setPositiveButtonCornerRadius(30.0f)
-                        .setCancelable(false)
-                        .setNegativeButtonCornerRadius(30.0f)
-                        .setBackgroundCornerRadius(30.0f)
-                        .setHeading(result.data.namaFilter ?: "Media Detected!")
-                        .setDescription("Apakah Anda ingin melanjutkan untuk memindai AR?")
-                        .setNegativeButtonText("Batal")
-                        .setPositiveButtonText("Lanjut")
-                        .build(object : StandardDialogActionListener {
-                            override fun onPositiveButtonClicked(dialog: Dialog) {
-                                setGrayBackground(false)
+                    Handler(Looper.getMainLooper()).postDelayed({
+                        activityScanQRBinding.loadingCard.visibility = View.GONE
+                        loadingDialog?.dismiss()
+                        PopupDialog.getInstance(this)
+                            .standardDialogBuilder()
+                            .createStandardDialog()
+                            .setIcon(R.drawable.check_ic)
+                            .setPositiveButtonBackgroundColor(R.color.primary)
+                            .setFontFamily(R.font.spartan_mb_semibold)
+                            .setPositiveButtonTextColor(R.color.white)
+                            .setPositiveButtonCornerRadius(30.0f)
+                            .setCancelable(false)
+                            .setNegativeButtonCornerRadius(30.0f)
+                            .setBackgroundCornerRadius(30.0f)
+                            .setHeading(result.data.namaFilter ?: "Media Detected!")
+                            .setDescription("Apakah Anda ingin melanjutkan untuk memindai AR?")
+                            .setNegativeButtonText("Batal")
+                            .setPositiveButtonText("Lanjut")
+                            .build(object : StandardDialogActionListener {
+                                override fun onPositiveButtonClicked(dialog: Dialog) {
+                                    setGrayBackground(false)
+                                    val intent = Intent(this@ScanQRActivity, MainActivit::class.java)
+                                    intent.putExtra("markerUrl", result.data.marker)
+                                    intent.putExtra("arUrl", result.data.ar?.get(0)?.ar)
+                                    intent.putExtra("soundUrl", result.data.sound)
+                                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                                    startActivity(intent)
+                                    dialog.dismiss()
+                                }
 
-                                val intent = Intent(this@ScanQRActivity, MainActivit::class.java)
-                                intent.putExtra("url", result.data.marker)
-                                intent.putExtra("ar", result.data.ar?.get(0)?.ar)
-                                intent.putExtra("sound", result.data.sound)
-                                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                                startActivity(intent)
-                                dialog.dismiss()
-                            }
-
-                            override fun onNegativeButtonClicked(dialog: Dialog) {
-                                setGrayBackground(false)
-                                codeScanner.startPreview()
-                                dialog.dismiss()
-                            }
-                        })
-                        .show()
+                                override fun onNegativeButtonClicked(dialog: Dialog) {
+                                    setGrayBackground(false)
+                                    codeScanner.startPreview()
+                                    dialog.dismiss()
+                                }
+                            })
+                            .show()
+                    }, 1000)
                 }
             }
         }
