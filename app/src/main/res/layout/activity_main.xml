@@ -15,19 +15,19 @@
         tools:layout_editor_absoluteY="0dp" />
 
     <androidx.cardview.widget.CardView
-        app:cardCornerRadius="30dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        app:cardCornerRadius="30dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
         <androidx.constraintlayout.widget.ConstraintLayout
-            android:elevation="100dp"
             android:id="@+id/loading_card"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:elevation="100dp"
             android:gravity="center"
             android:orientation="vertical">
 
@@ -46,10 +46,10 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Loading..."
                 android:layout_marginBottom="20dp"
-                android:textColor="@color/black"
                 android:fontFamily="@font/spartan_mb_bold"
+                android:text="Loading..."
+                android:textColor="@color/black"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent" />
@@ -58,32 +58,26 @@
 
     </androidx.cardview.widget.CardView>
 
-
-
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fab_shot_btn"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+    <android.widget.Button
+        android:id="@+id/camera_btn"
+        android:layout_width="70dp"
+        android:layout_height="70dp"
         android:layout_marginBottom="50dp"
-        android:visibility="gone"
-        android:src="@drawable/camera"
-        app:backgroundTint="@color/primary"
+        android:background="@drawable/camera_button_normal"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toEndOf="@+id/fab_record_btn" />
-
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fab_record_btn"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="50dp"
-        android:src="@drawable/bg_red_10"
-        android:visibility="gone"
-        app:backgroundTint="@color/primary"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/fab_shot_btn"
-        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent" />
+
+    <FrameLayout
+        android:id="@+id/black_overlay"
+        android:visibility="gone"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#000000"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -22,6 +22,7 @@ import com.google.ar.sceneform.rendering.ModelRenderable
 import com.google.ar.sceneform.ux.ArFragment
 import com.pkm.pinme.data.remote.network.ApiService
 import com.pkm.pinme.data.remote.response.FilterModel
+import com.pkm.pinme.ui.main.MainActivity
 import com.pkm.pinme.utils.Result
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -52,7 +53,7 @@ class PinMeRepository(
         }
     }
 
-    fun takePhoto(activity: Activity, arFragment: ArFragment) {
+    fun takePhoto(activity: MainActivity, arFragment: ArFragment) {
         val filename = generateFilename()
         val view: ArSceneView = arFragment.arSceneView
 
@@ -61,24 +62,25 @@ class PinMeRepository(
         handlerThread.start()
 
         PixelCopy.request(view, bitmap, { copyResult ->
-            if (copyResult == PixelCopy.SUCCESS) {
-                try {
-                    saveBitmapToDisk(activity, bitmap, filename)
-                } catch (e: IOException) {
-                    val toast = Toast.makeText(activity.applicationContext, e.toString(), Toast.LENGTH_LONG)
+            activity.runOnUiThread {
+                if (copyResult == PixelCopy.SUCCESS) {
+                    try {
+                        saveBitmapToDisk(activity, bitmap, filename)
+                        activity.hideBlackOverlay()
+                    } catch (e: IOException) {
+                        val toast = Toast.makeText(activity.applicationContext, e.toString(), Toast.LENGTH_LONG)
+                        toast.show()
+                    }
+                } else {
+                    val toast = Toast.makeText(activity.applicationContext, "Failed to copyPixels: $copyResult", Toast.LENGTH_LONG)
                     toast.show()
-                    return@request
                 }
-                val toast = Toast.makeText(activity.applicationContext, "Photo Captured", Toast.LENGTH_LONG)
-
-
-            } else {
-                val toast = Toast.makeText(activity.applicationContext, "Failed to copyPixels: $copyResult", Toast.LENGTH_LONG)
-                toast.show()
+                handlerThread.quitSafely()
             }
-            handlerThread.quitSafely()
         }, Handler(handlerThread.looper))
     }
+
+
 
     private fun generateFilename(): String {
         val date = SimpleDateFormat("yyyyMMddHHmmss", Locale.getDefault()).format(Date())

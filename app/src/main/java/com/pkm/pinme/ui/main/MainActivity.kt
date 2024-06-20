@@ -1,10 +1,14 @@
 package com.pkm.pinme.ui.main
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.media.CamcorderProfile
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.DisplayMetrics
 import android.util.Log
+import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
 import android.widget.Toast
@@ -75,39 +79,64 @@ class MainActivity : AppCompatActivity(), FragmentOnAttachListener, OnSessionCon
         }
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     private fun setupUI() {
         viewModel.isLoading.observe(this) {
-            if (it){
+            if (it) {
                 binding.loadingCard.visibility = View.VISIBLE
-                binding.fabRecordBtn.visibility = View.GONE
-                binding.fabShotBtn.visibility = View.GONE
+                binding.cameraBtn.visibility = View.GONE
             } else {
                 binding.loadingCard.visibility = View.GONE
-                binding.fabRecordBtn.visibility = View.VISIBLE
-                binding.fabShotBtn.visibility = View.VISIBLE
+                binding.cameraBtn.visibility = View.VISIBLE
             }
         }
 
-        binding.fabRecordBtn.setOnClickListener {
-            viewModel.arSound?.start()
+        val handler = Handler(Looper.getMainLooper())
+        var isLongPress = false
+
+        // Long press runnable
+        val longPressRunnable = Runnable {
+            isLongPress = true
+            // Handle long press action
+            binding.cameraBtn.isPressed = true
             viewModel.videoRecorder.setSceneView(arFragment.arSceneView)
-            val orientation = this.getResources().configuration.orientation;
+            val orientation = this.resources.configuration.orientation
             viewModel.videoRecorder.setVideoQuality(CamcorderProfile.QUALITY_720P, orientation)
             viewModel.videoRecorder.setVideoSize(recordingWidth, recordingHeight)
             viewModel.videoRecorder.setFrameRate(60)
+            viewModel.videoRecorder.onToggleRecord()
+            viewModel.arSound?.start()
+            Toast.makeText(this, "Recording", Toast.LENGTH_LONG).show()
+        }
 
-            val isRecording = viewModel.videoRecorder.onToggleRecord()
-            if (isRecording){
-                Toast.makeText(this,"Recording",Toast.LENGTH_LONG).show()
-            } else {
-                Toast.makeText(this,"Stop Recording",Toast.LENGTH_LONG).show()
+        // Set OnTouchListener for the button
+        binding.cameraBtn.setOnTouchListener { view, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    isLongPress = false
+                    handler.postDelayed(longPressRunnable, 1000) // Start long press detection after 1 second
+                    true
+                }
+                MotionEvent.ACTION_UP -> {
+                    handler.removeCallbacks(longPressRunnable) // Remove long press detection
+                    binding.cameraBtn.isPressed = false
+                    if (isLongPress) {
+                        // Handle long press release action
+                        viewModel.videoRecorder.onToggleRecord()
+                        Toast.makeText(this, "Stop Recording", Toast.LENGTH_LONG).show()
+                    } else {
+                        // Handle single click action
+                        showBlackOverlay()
+                        viewModel.takePhoto(this, arFragment)
+                    }
+                    true
+                }
+                else -> false
             }
         }
-
-        binding.fabShotBtn.setOnClickListener {
-            viewModel.takePhoto(this, arFragment)
-        }
     }
+
+
 
     override fun onAttachFragment(fragmentManager: FragmentManager, fragment: Fragment) {
         if (fragment.id == R.id.arFragment) {
@@ -179,6 +208,15 @@ class MainActivity : AppCompatActivity(), FragmentOnAttachListener, OnSessionCon
         intentScan.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intentScan)
         finish()
+    }
+
+
+    private fun showBlackOverlay() {
+        binding.blackOverlay.visibility = View.VISIBLE
+    }
+
+    fun hideBlackOverlay() {
+        binding.blackOverlay.visibility = View.GONE
     }
 }
 

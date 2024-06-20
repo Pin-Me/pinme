@@ -93,5 +93,5 @@ class MainViewModel(private val repository: PinMeRepository) : ViewModel() {
     }
 
     //Take Photo
-    fun takePhoto(activity: Activity, arFragment:ArFragment) = repository.takePhoto(activity, arFragment)
+    fun takePhoto(activity: MainActivity, arFragment:ArFragment) = repository.takePhoto(activity, arFragment)
 }
