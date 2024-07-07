@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "528566131215",
+    "project_id": "pinme-8b44c",
+    "storage_bucket": "pinme-8b44c.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:528566131215:android:034ed9347f3d74486ee17a",
+        "android_client_info": {
+          "package_name": "com.pkm.pinme"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCtI-fvVK5-OFRfGCWjj-EYrG3XS_6ojEE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

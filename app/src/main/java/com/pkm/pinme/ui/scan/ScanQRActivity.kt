@@ -24,6 +24,9 @@ import com.budiyev.android.codescanner.CodeScanner
 import com.budiyev.android.codescanner.DecodeCallback
 import com.budiyev.android.codescanner.ErrorCallback
 import com.budiyev.android.codescanner.ScanMode
+import com.google.ar.core.ArCoreApk
+import com.google.ar.sceneform.Sceneform
+import com.google.ar.sceneform.ux.ArFragment
 import com.pkm.pinme.R
 import com.pkm.pinme.databinding.ActivityScanQrBinding
 import com.pkm.pinme.factory.ViewModelFactory
@@ -52,14 +55,31 @@ class ScanQRActivity : AppCompatActivity() {
     private lateinit var codeScanner: CodeScanner
     private var enableFlash = false
 
+    private var mUserRequestedInstall = true
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         activityScanQRBinding = ActivityScanQrBinding.inflate(layoutInflater)
         setContentView(activityScanQRBinding.root)
         setViewModelFactory()
 
+        val isAvaible = ArCoreApk.getInstance().checkAvailability(this)
+        if (isAvaible.isSupported){
+            Log.e("isAvaible", "Supported")
+        } else {
+            Log.e("isAvaible", "Not Supported")
+        }
+
+        requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+            if (permissions.all { it.value }) {
+                Log.e("PERMISSIONS", "Granted")
+                codeScanner.startPreview()
+            } else {
+                Log.e("PERMISSIONS", "Not all permissions were granted")
+            }
+        }
         initiateScan()
-        requestPermissions(getPermissionsForTargetSDK())
+        showUserNeedToInstallArCore()
     }
 
     override fun onRestart() {
@@ -93,7 +113,7 @@ class ScanQRActivity : AppCompatActivity() {
                                 codeScanner.startPreview()
                                 it.dismiss()
                             }
-                            .show();
+                            .show()
                     }, 1000)
                 }
 
@@ -157,10 +177,7 @@ class ScanQRActivity : AppCompatActivity() {
             }
         }
         codeScanner.errorCallback = ErrorCallback { // or ErrorCallback.SUPPRESS
-            runOnUiThread {
-                Toast.makeText(this, "Aplikasi memerlukan akses camera dan penyimpanan",
-                    Toast.LENGTH_LONG).show()
-            }
+
         }
 
         activityScanQRBinding.flashBtn.setOnClickListener {
@@ -193,20 +210,11 @@ class ScanQRActivity : AppCompatActivity() {
     }
 
     private fun requestPermissions(permissions: Array<String>) {
-        requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
-            if (permissions.all { it.value }) {
-                Log.e("PERMISSIONS", "Granted")
-                codeScanner.startPreview()
-            } else {
-                Log.e("PERMISSIONS", "Not all permissions were granted")
-            }
-        }
-
         val permissionsNotGranted = permissions.filter { permission ->
             ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED
         }
         if (permissionsNotGranted.isNotEmpty()) {
-            requestPermissionLauncher.launch(permissionsNotGranted.toTypedArray())
+            showPermissionRequest(permissionsNotGranted.toTypedArray())
         } else {
             codeScanner.startPreview()
         }
@@ -231,4 +239,30 @@ class ScanQRActivity : AppCompatActivity() {
 
     }
 
+    private fun showUserNeedToInstallArCore() {
+        when (ArCoreApk.getInstance().requestInstall(this, mUserRequestedInstall)) {
+            ArCoreApk.InstallStatus.INSTALLED -> {
+                requestPermissions(getPermissionsForTargetSDK())
+            }
+            ArCoreApk.InstallStatus.INSTALL_REQUESTED -> {
+                mUserRequestedInstall = false
+            }
+        }
+    }
+
+    private fun showPermissionRequest(permission: Array<String>) {
+        PopupDialog.getInstance(this)
+            .statusDialogBuilder()
+            .createSuccessDialog()
+            .setHeading("Perizinan")
+            .setFontFamily(R.font.spartan_mb_semibold)
+            .setCancelable(false)
+            .setDescription("PinMe memerlukan akses kamera, penyimpanan serta mic agar dapat berjalan dengan baik")
+            .setActionButtonText("Mengerti")
+            .build {
+                it.dismiss()
+                requestPermissionLauncher.launch(permission)
+            }
+            .show();
+    }
 }

@@ -30,7 +30,7 @@ data class ArItem(
 	val id: String? = null,
 
 	@field:SerializedName("positionX")
-	val positionX: Int? = null,
+	val positionX: Float? = null,
 
 ) : Parcelable
 

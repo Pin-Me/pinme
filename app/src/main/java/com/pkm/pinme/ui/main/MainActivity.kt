@@ -52,8 +52,7 @@ class MainActivity : AppCompatActivity(), FragmentOnAttachListener, OnSessionCon
     private var markerUrl: String? = null
     private var arUrl: String? = null
     private var soundUrl: String? = null
-    private var size: Float? = null
-
+    private var size: Float = 0.50f // Default value
     // ViewModel
     private lateinit var factory: ViewModelFactory
     private val viewModel: MainViewModel by viewModels { factory }
@@ -77,15 +76,10 @@ class MainActivity : AppCompatActivity(), FragmentOnAttachListener, OnSessionCon
         markerUrl = intent.getStringExtra("markerUrl")
         arUrl = intent.getStringExtra("arUrl")
         soundUrl = intent.getStringExtra("soundUrl")
-        size = intent.getFloatExtra("size", 0.25f)
-        Log.e("SIZE FROM API", intent.getFloatExtra("size", 0.25F).toString())
+        size = intent.getFloatExtra("size", -0.01f)
+        Log.e("SIZE FROM API", intent.getFloatExtra("size", 0.50f).toString())
 
         Log.e("SIZE FROM API", size.toString());
-
-//        markerUrl = "https://i.natgeofe.com/k/63b1a8a7-0081-493e-8b53-81d01261ab5d/red-panda-full-body_square.jpg"
-//        arUrl = "https://github.com/Pin-Me/dummy-files/blob/main/red%20panda.glb?raw=true"
-//        soundUrl ="https://github.com/Pin-Me/dummy-files/blob/main/guiro-sweep-156002.mp3?raw=true"
-//        soundUrl ="https://github.com/Pin-Me/dummy-files/blob/main/guiro-sweep-156002.mp3?raw=true"
 
         recordingRunnable = object : Runnable {
             @SuppressLint("DefaultLocale")
@@ -97,7 +91,6 @@ class MainActivity : AppCompatActivity(), FragmentOnAttachListener, OnSessionCon
                 recordingHandler.postDelayed(this, 1000)
             }
         }
-
 
         viewModel.configureAr(arUrl!!, soundUrl, markerUrl!!, this)
 
@@ -274,13 +267,14 @@ class MainActivity : AppCompatActivity(), FragmentOnAttachListener, OnSessionCon
                 rabbitDetected = true
                 Toast.makeText(this, "${augmentedImage.name} tag detected", Toast.LENGTH_LONG).show()
 
-                anchorNode.worldScale = Vector3(size!!, size!!, size!!)
+                anchorNode.worldScale = Vector3(size, size, size)
                 arFragment.arSceneView.scene.addChild(anchorNode)
 
                 val modelNode = TransformableNode(
                     arFragment.transformationSystem
                 )
 
+                modelNode.localScale = Vector3(size, size, size);
                 modelNode.setRenderable(viewModel.arModel)
                 anchorNode.addChild(modelNode)
                 viewModel.arSound?.start()
