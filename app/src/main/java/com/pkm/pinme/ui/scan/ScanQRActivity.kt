@@ -68,7 +68,7 @@ class ScanQRActivity : AppCompatActivity() {
     }
 
     private fun requestFilter(filterId: String) {
-        viewModel.getFilter(filterId, this).observe(this) { result ->
+        viewModel.getFilter(filterId).observe(this) { result ->
             when (result) {
                 is Result.Loading -> {
                     setGrayBackground(true)
@@ -115,7 +115,7 @@ class ScanQRActivity : AppCompatActivity() {
                             .setHeading(result.data.namaFilter ?: "Media Detected!")
                             .setDescription("Apakah Anda ingin melanjutkan untuk memindai AR?")
                             .setNegativeButtonText("Batal")
-                            .setPositiveButtonText("Lanjut")
+                            .setPositiveButtonText("Scan")
                             .build(object : StandardDialogActionListener {
                                 override fun onPositiveButtonClicked(dialog: Dialog) {
                                     setGrayBackground(false)
@@ -123,6 +123,7 @@ class ScanQRActivity : AppCompatActivity() {
                                     intent.putExtra("markerUrl", result.data.marker)
                                     intent.putExtra("arUrl", result.data.ar?.get(0)?.ar)
                                     intent.putExtra("soundUrl", result.data.sound)
+                                    intent.putExtra("size", result.data.ar?.get(0)?.positionX)
                                     intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                                     startActivity(intent)
                                     dialog.dismiss()

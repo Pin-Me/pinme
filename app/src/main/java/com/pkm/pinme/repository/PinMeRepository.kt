@@ -24,6 +24,7 @@ import com.pkm.pinme.data.remote.network.ApiService
 import com.pkm.pinme.data.remote.response.FilterModel
 import com.pkm.pinme.ui.main.MainActivity
 import com.pkm.pinme.utils.Result
+import kotlinx.coroutines.awaitAll
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
@@ -38,7 +39,7 @@ class PinMeRepository(
 ) {
 
 
-    fun getFilter(filterId: String, context: Context): LiveData<Result<FilterModel>> = liveData {
+    fun getFilter(filterId: String): LiveData<Result<FilterModel>> = liveData {
         emit(Result.Loading)
         try {
             val getFilterRes = apiService.getFilter(filterId)
@@ -49,7 +50,7 @@ class PinMeRepository(
                 emit(Result.Error(getFilterRes.message))
             }
         } catch (e: Exception) {
-            emit(Result.Error("AR Tidak Ditemukan"))
+            emit(Result.Error("Terjadi kesalahan, hubungi admin"))
         }
     }
 
@@ -65,9 +66,17 @@ class PinMeRepository(
             activity.runOnUiThread {
                 if (copyResult == PixelCopy.SUCCESS) {
                     try {
-                        saveBitmapToDisk(activity, bitmap, filename)
+                        val savedPath = saveBitmapToDisk(activity, bitmap, filename)
+                        MediaScannerConnection.scanFile(
+                            activity.applicationContext,
+                            arrayOf(savedPath),
+                            null
+                        ) { path: String, uri: Uri ->
+                            activity.showRecentGalery()
+                        }
                         activity.hideBlackOverlay()
                     } catch (e: IOException) {
+                        Log.e("HIYA ERROR", e.message.toString())
                         val toast = Toast.makeText(activity.applicationContext, e.toString(), Toast.LENGTH_LONG)
                         toast.show()
                     }
@@ -80,40 +89,25 @@ class PinMeRepository(
         }, Handler(handlerThread.looper))
     }
 
-
-
-    private fun generateFilename(): String {
-        val date = SimpleDateFormat("yyyyMMddHHmmss", Locale.getDefault()).format(Date())
-        return Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
-            .toString() + "/PinMe/" + "PinMePicture_" + date + ".jpg"
+    fun saveBitmapToDisk(context: Context, bitmap: Bitmap, filename: String): String {
+        val directory = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "PinMe")
+        if (!directory.exists()) {
+            directory.mkdirs()
+        }
+        val photoFile = File(directory, filename)
+        FileOutputStream(photoFile).use { out ->
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+            out.flush()
+        }
+        return photoFile.absolutePath
     }
 
-    private fun saveBitmapToDisk(activity: Activity, bitmap: Bitmap, filename: String) {
-        val out = File(filename)
-        if (!out.parentFile.exists()) {
-            out.parentFile.mkdirs()
-        }
-        try {
-            FileOutputStream(filename).use { outputStream ->
-                ByteArrayOutputStream().use { outputData ->
-                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputData)
-                    outputData.writeTo(outputStream)
-                    outputStream.flush()
-                    outputStream.close()
-                }
-            }
-        } catch (ex: IOException) {
-            throw IOException("Failed to save bitmap to disk", ex)
-        }
-
-        MediaScannerConnection.scanFile(
-            activity.applicationContext,
-            arrayOf(filename),
-            null
-        ) { path: String, uri: Uri ->
-            Log.i("INFO", "-> uri=$uri")
-        }
+    fun generateFilename(): String {
+        val dateFormat = SimpleDateFormat("yyyyMMddHHmmss", Locale.getDefault())
+        val date = Date()
+        return "PinMePicture_${dateFormat.format(date)}.jpg"
     }
+
 
     companion object {
         @Volatile

@@ -5,5 +5,5 @@ import androidx.lifecycle.ViewModel
 import com.pkm.pinme.repository.PinMeRepository
 
 class ScanQRViewModel(private val repository:PinMeRepository): ViewModel() {
-    fun getFilter(filterId: String, context: Context) = repository.getFilter(filterId, context)
+    fun getFilter(filterId: String) = repository.getFilter(filterId)
 }

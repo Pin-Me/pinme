@@ -32,16 +32,17 @@ class MainViewModel(private val repository: PinMeRepository) : ViewModel() {
 
     val isLoading = MutableLiveData(true)
 
-    fun configureAr(arUrl: String, soundUrl: String, imgUrl: String, activity: Activity) {
+    fun configureAr(arUrl: String, soundUrl: String?, imgUrl: String, activity: Activity) {
         viewModelScope.launch {
             loadAugmentedImageDatabaseWithBitmap(imgUrl, activity)
             loadArModel(arUrl, activity)
-            loadArSound(soundUrl)
+            if (soundUrl != null) {
+                loadArSound(soundUrl)
+            }
 
             // Emit the AR configuration with the loaded resources
             isLoading.postValue(false)
             isConfigurationCompleted.postValue(true)
-            Toast.makeText(activity, "DONE", Toast.LENGTH_LONG).show()
         }
     }
 
@@ -56,7 +57,7 @@ class MainViewModel(private val repository: PinMeRepository) : ViewModel() {
                     arModel = rabbitModel
                 }
                 .exceptionally {
-                    Toast.makeText(activity, it.message, Toast.LENGTH_LONG).show()
+                    Toast.makeText(activity, "Terjadi kesalahan, hubungi admin", Toast.LENGTH_LONG).show()
                     Log.e("ERROR LOAD AR", it.message.toString())
                     null
                 }

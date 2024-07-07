@@ -6,6 +6,6 @@ import retrofit2.http.Path
 
 interface ApiService {
 
-    @GET("/filter/{Id}")
+    @GET("/api/filters/{Id}")
     suspend fun getFilter(@Path("Id") filterId: String) : FilterResponse
 }

@@ -20,20 +20,11 @@ data class FilterResponse(
 @Parcelize
 data class ArItem(
 
-	@field:SerializedName("positionY")
-	val positionY: Int? = null,
-
 	@field:SerializedName("filterId")
 	val filterId: String? = null,
 
 	@field:SerializedName("ar")
 	val ar: String? = null,
-
-	@field:SerializedName("positionZ")
-	val positionZ: Int? = null,
-
-	@field:SerializedName("createdAt")
-	val createdAt: String? = null,
 
 	@field:SerializedName("id")
 	val id: String? = null,
@@ -41,8 +32,6 @@ data class ArItem(
 	@field:SerializedName("positionX")
 	val positionX: Int? = null,
 
-	@field:SerializedName("updatedAt")
-	val updatedAt: String? = null
 ) : Parcelable
 
 @Parcelize
@@ -50,9 +39,6 @@ data class FilterModel(
 
 	@field:SerializedName("preview")
 	val preview: String? = null,
-
-	@field:SerializedName("createdAt")
-	val createdAt: String? = null,
 
 	@field:SerializedName("ar")
 	val ar: List<ArItem?>? = null,
@@ -66,18 +52,9 @@ data class FilterModel(
 	@field:SerializedName("sound")
 	val sound: String? = null,
 
-	@field:SerializedName("expiredDate")
-	val expiredDate: String? = null,
-
 	@field:SerializedName("namaFilter")
 	val namaFilter: String? = null,
 
 	@field:SerializedName("id")
 	val id: String? = null,
-
-	@field:SerializedName("isActive")
-	val isActive: Boolean? = null,
-
-	@field:SerializedName("updatedAt")
-	val updatedAt: String? = null
 ) : Parcelable

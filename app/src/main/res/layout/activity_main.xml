@@ -8,13 +8,16 @@
 
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/arFragment"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
         android:background="#212121"
-        tools:layout_editor_absoluteX="0dp"
-        tools:layout_editor_absoluteY="0dp" />
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <androidx.cardview.widget.CardView
+        android:id="@+id/cardView2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:cardCornerRadius="30dp"
@@ -70,14 +73,152 @@
 
     <FrameLayout
         android:id="@+id/black_overlay"
-        android:visibility="gone"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="#000000"
+        android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/top_bar"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:background="#2C000000"
+        android:visibility="invisible"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="25dp"
+            android:src="@drawable/setting_ic"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/scan_qr_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:backgroundTint="@color/white"
+        android:minWidth="30dp"
+        android:minHeight="10dp"
+        app:cardCornerRadius="10dp"
+        app:cardElevation="16dp"
+        app:layout_constraintBottom_toTopOf="@+id/scan_qr"
+        app:layout_constraintEnd_toEndOf="@+id/scan_qr"
+        app:layout_constraintStart_toStartOf="@+id/scan_qr"
+        app:layout_constraintTop_toTopOf="@+id/scan_qr">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:fontFamily="@font/spartan_mb_bold"
+            android:text="QR"
+            android:textAlignment="center"
+            android:textSize="10dp" />
+
+    </androidx.cardview.widget.CardView>
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/scan_qr"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="10dp"
+        android:backgroundTint="#333333"
+        android:minWidth="45dp"
+        android:minHeight="45dp"
+        app:cardCornerRadius="10dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/top_bar">
+
+        <ImageView
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_gravity="center"
+            android:contentDescription="Scan QR"
+            android:src="@drawable/qr_scan_ic" />
+    </androidx.cardview.widget.CardView>
+
+
+    <androidx.cardview.widget.CardView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:cardCornerRadius="10dp"
+        android:layout_centerHorizontal="true"
+        app:layout_constraintBottom_toBottomOf="@+id/camera_btn"
+        app:layout_constraintEnd_toStartOf="@+id/camera_btn"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/camera_btn">
+
+        <ImageView
+            android:id="@+id/gallery_image"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_gravity="center"
+            android:scaleType="centerCrop"
+            android:src="@color/white"
+            app:circularflow_defaultRadius="10dp" />
+    </androidx.cardview.widget.CardView>
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/recording_text_layout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:cardCornerRadius="5dp"
+        app:cardBackgroundColor="@color/white"
+        app:layout_constraintEnd_toEndOf="@id/top_bar"
+        app:layout_constraintStart_toStartOf="@id/top_bar"
+        app:layout_constraintTop_toTopOf="@id/top_bar"
+        app:layout_constraintBottom_toBottomOf="@id/top_bar">
+
+        <LinearLayout
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="3dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:layout_gravity="center"
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:src="@drawable/dot"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/spartan_mb_black"
+                android:text=" " />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/black"
+                android:fontFamily="@font/bold"
+                android:text="REC | " />
+
+            <TextView
+                android:id="@+id/recording_text"
+                android:layout_width="wrap_content"
+                android:textColor="@color/black"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/bold"
+                android:text="00:00" />
+
+        </LinearLayout>
+
+    </androidx.cardview.widget.CardView>
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>
