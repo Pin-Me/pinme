@@ -76,10 +76,7 @@ class MainActivity : AppCompatActivity(), FragmentOnAttachListener, OnSessionCon
         markerUrl = intent.getStringExtra("markerUrl")
         arUrl = intent.getStringExtra("arUrl")
         soundUrl = intent.getStringExtra("soundUrl")
-        size = intent.getFloatExtra("size", -0.01f)
-        Log.e("SIZE FROM API", intent.getFloatExtra("size", 0.50f).toString())
-
-        Log.e("SIZE FROM API", size.toString());
+        size = intent.getFloatExtra("size", 0.05f)
 
         recordingRunnable = object : Runnable {
             @SuppressLint("DefaultLocale")

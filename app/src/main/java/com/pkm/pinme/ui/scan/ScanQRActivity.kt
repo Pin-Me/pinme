@@ -63,13 +63,6 @@ class ScanQRActivity : AppCompatActivity() {
         setContentView(activityScanQRBinding.root)
         setViewModelFactory()
 
-        val isAvaible = ArCoreApk.getInstance().checkAvailability(this)
-        if (isAvaible.isSupported){
-            Log.e("isAvaible", "Supported")
-        } else {
-            Log.e("isAvaible", "Not Supported")
-        }
-
         requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
             if (permissions.all { it.value }) {
                 Log.e("PERMISSIONS", "Granted")
