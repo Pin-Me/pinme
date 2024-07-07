@@ -250,7 +250,7 @@ class ScanQRActivity : AppCompatActivity() {
             .setHeading("Perizinan")
             .setFontFamily(R.font.spartan_mb_semibold)
             .setCancelable(false)
-            .setDescription("PinMe memerlukan akses kamera, penyimpanan serta mic agar dapat berjalan dengan baik")
+            .setDescription("PinMe memerlukan akses kamera, penyimpanan serta microphone agar dapat berjalan dengan baik")
             .setActionButtonText("Mengerti")
             .build {
                 it.dismiss()
